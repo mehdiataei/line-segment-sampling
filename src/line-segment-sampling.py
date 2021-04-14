@@ -1,6 +1,12 @@
 import numpy as np
-from sympy import N
-from sympy.geometry import Point, Segment
+from ground.base import get_context
+context = get_context()
+Point, Segment = context.point_cls, context.segment_cls
+from bentley_ottmann.planar import segments_intersect
+from tqdm import tqdm
+
+import matplotlib.pylab as plt
+from matplotlib import collections  as mc
 
 
 class LineSegmentSampling2D:
@@ -9,8 +15,7 @@ class LineSegmentSampling2D:
     size lx, ly
     """
 
-    def __init__(self, num_samples, min_length, max_length, lx, ly):
-        self.num_samples = num_samples
+    def __init__(self, min_length, max_length, lx, ly):
         self.lx = lx
         self.ly = ly
         self.min_length = min_length
@@ -45,8 +50,21 @@ class LineSegmentSampling2D:
 
         return line_seg
 
-a = LineSegmentSampling2D(1, 1, 2, 10, 10)
-b = a.generateLine()
+    def generate_N_lines(self, N):
+        lines = []
+        for i in range(N):
+            lines.append(self.generateLine())
+        return lines
 
-print(np.sqrt(float(b.points[0][0] - b.points[1][0])
-              ** 2 + float(b.points[0][1] - b.points[1][1]) ** 2))
+    def generate_N_non_intersecting_lines(self, N):
+        lines = []
+        pbar = tqdm(total = N)
+        while len(lines) < N:
+            lines.append(self.generateLine())
+            if (segments_intersect(lines)):
+                lines = lines[:-1]
+            else: 
+                pbar.update(1)
+
+
+        return lines
